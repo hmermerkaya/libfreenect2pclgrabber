@@ -67,17 +67,106 @@ if(${WITH_PCL})
 endif()
 
 find_package(OpenCV     REQUIRED)
-find_package(Freenect2  REQUIRED)
+find_package(freenect2  REQUIRED)
 
 include_directories(${OpenCV_INCLUDE_DIRS})
-include_directories(${FREENECT2_INCLUDE_DIRS})
+include_directories(${freenect2_INCLUDE_DIRS})
 include_directories(${INCLUDE})
 
 add_executable(Kinect2Grabber      test.cpp)
 add_executable(MultiKinect2Grabber multi_test.cpp)
+add_executable(pcl_pcd_recorder pcl_pcd_recorder.cpp)
+add_executable(pcl_pcd_multiCamrecorder pcl_pcd_multiCamrecorder.cpp)
+add_executable(pcl_pcd_multiCamrecorderThreads pcl_pcd_multiCamrecorderThreads.cpp)
+#add_executable(pcl_ply_multiCamrecorderThreads pcl_ply_multiCamrecorderThreads.cpp)
 
-target_link_libraries(Kinect2Grabber      ${OpenCV_LIBS} ${FREENECT2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
-target_link_libraries(MultiKinect2Grabber ${OpenCV_LIBS} ${FREENECT2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+add_executable(pcl_ply_multiCamrecorderThreadsnew pcl_ply_multiCamrecorderThreadsnew.cpp)
+add_executable(pcl_ply_multiCamrecorderThreadsRValue pcl_ply_multiCamrecorderThreadsRValue.cpp)
+add_executable(pcl_ply_multiCamrecorderThreadsConstRef pcl_ply_multiCamrecorderThreadsConstRef.cpp)
+add_executable(pcl_video_player pcl_video_player.cpp)
+add_executable(pcl_vtk_player pcl_vtk_player.cpp)
+
+
+add_executable(pairwise_incr_reg  pairwise_incr_reg.cpp)
+add_executable(registration_vis  registration_vis.cpp)
+add_executable(multi_grabb_registr  multi_grabb_registr.cpp)
+add_executable(multi_grabb_registr2  multi_grabb_registr2.cpp)
+
+add_executable(multiGrabberAndRegister  multiGrabberAndRegister.cpp)
+add_executable(multiGrabberAndPairwiseRegister  multiGrabberAndPairwiseRegister.cpp)
+add_executable(multiGrabberAndReadTransforms  multiGrabberAndReadTransforms.cpp)
+add_executable(multiGrabberAndReadTransformsThreads  multiGrabberAndReadTransformsThreads.cpp)
+
+
+add_executable(multiGrabberAndReadTransformsConcatenate  multiGrabberAndReadTransformsConcatenate.cpp)
+add_executable(multiGrabberAndReadTransformsConcatenateThreads  multiGrabberAndReadTransformsConcatenateThreads.cpp)
+
+
+
+
+add_executable(mesh  mesh.cpp)
+add_executable(mesh_mls  mesh_mls.cpp)
+add_executable(mls_smoothing mls_smoothing.cpp)
+add_executable(mls_smoothing_copy mls_smoothing_copy.cpp)
+
+	
+add_executable(poisson_recon  poisson_recon.cpp)
+add_executable(marching_cube  marching_cube.cpp)
+add_executable(poisson_recontruction poisson_recontruction.cpp)
+
+add_executable(ndt  ndt.cpp)
+add_executable(example1  example1.cpp)
+add_executable(example2  example2.cpp)
+add_executable(bspline_fitting bspline_fitting.cpp)
+add_executable(staticticalRemoval staticticalRemoval.cpp)
+add_executable(radiusOutlierRemoval radiusOutlierRemoval.cpp)
+
+
+target_link_libraries(Kinect2Grabber      ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(MultiKinect2Grabber ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(pcl_pcd_recorder ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(pcl_pcd_multiCamrecorder ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(pcl_pcd_multiCamrecorderThreads  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+
+target_link_libraries(pcl_ply_multiCamrecorderThreadsnew  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+
+target_link_libraries(pcl_ply_multiCamrecorderThreadsRValue  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(pcl_ply_multiCamrecorderThreadsConstRef  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+
+target_link_libraries(pcl_video_player  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+
+target_link_libraries(pairwise_incr_reg  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(multi_grabb_registr  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(multi_grabb_registr2  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+
+target_link_libraries(ndt  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(registration_vis  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(example1  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+
+target_link_libraries(example2  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+
+target_link_libraries(multiGrabberAndRegister  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+
+target_link_libraries(multiGrabberAndPairwiseRegister ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(multiGrabberAndReadTransforms ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(multiGrabberAndReadTransformsThreads  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(multiGrabberAndReadTransformsConcatenate ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(multiGrabberAndReadTransformsConcatenateThreads ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+
+target_link_libraries(mesh ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(mesh_mls ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(mls_smoothing ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(mls_smoothing_copy ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+
+
+target_link_libraries(pcl_vtk_player ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(poisson_recon ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(marching_cube ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(poisson_recontruction ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+
+target_link_libraries(bspline_fitting ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(staticticalRemoval ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(radiusOutlierRemoval  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
 
 if(${WITH_ROS})
 	add_executable(RosKinect2Grabber test_ros.cpp)

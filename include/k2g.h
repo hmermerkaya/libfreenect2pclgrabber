@@ -122,8 +122,8 @@ public:
 		dev_->setIrAndDepthFrameListener(&listener_);
 		dev_->start();
 
-		logger_ = libfreenect2::getGlobalLogger();
-
+		//logger_ = libfreenect2::getGlobalLogger();
+        disableLog();
 		registration_ = new libfreenect2::Registration(dev_->getIrCameraParams(), dev_->getColorCameraParams());
 
 		prepareMake3D(dev_->getIrCameraParams());
@@ -157,6 +157,31 @@ public:
 		libfreenect2::Freenect2Device::ColorCameraParams cp = getRgbParameters();
 		std::cout << "rgb fx=" << cp.fx << ",fy=" << cp.fy <<
 			",cx=" << cp.cx << ",cy=" << cp.cy << std::endl;
+
+      std::cout<<  cp.mx_x3y0 <<" " // xxx
+	    <<cp.mx_x0y3<<" " // yyy
+	     <<cp.mx_x2y1<<" " // xxy
+	     <<cp.mx_x1y2<<" "// yyx
+	     <<cp.mx_x2y0<<" " // xx
+	     <<cp.mx_x0y2<<" " // yy
+	     <<cp.mx_x1y1<<" " // xy
+	     <<cp.mx_x1y0<<" " // x
+	     <<cp.mx_x0y1<<" " // y
+	     <<cp.mx_x0y0<<" " // 1
+
+	    <<cp.my_x3y0<<" " // xxx
+	    <<cp.my_x0y3<<" "// yyy
+	    <<cp.my_x2y1<<" " // xxy
+	    <<cp.my_x1y2<<" "// yyx
+	    <<cp.my_x2y0<<" " // xx
+	    <<cp.my_x0y2<<" " // yy
+	    <<cp.my_x1y1<<" " // xy
+	    <<cp.my_x1y0<<" " // x
+	    <<cp.my_x0y1<<" " // y
+	   << cp.my_x0y0<<" "<<std::endl; // 1
+
+
+
 		libfreenect2::Freenect2Device::IrCameraParams ip = getIrParameters();
 		std::cout << "ir fx=" << ip.fx << ",fy=" << ip.fy <<
 			",cx=" << ip.cx << ",cy=" << ip.cy <<
@@ -392,7 +417,50 @@ public:
 			color_mat = tmp_color.clone();
 		}
 		listener_.release(frames_);
+
 	}
+
+
+	void getColor(boost::shared_ptr<cv::Mat>  color_mat){
+		listener_.waitForNewFrame(frames_);
+		//libfreenect2::Frame * rgb = frames_[libfreenect2::Frame::Color];
+        libfreenect2::Frame * rgb = frames_[libfreenect2::Frame::Color];
+       // boost::shared_ptr<libfreenect2::Frame> rgb ( (libfreenect2::Frame*)rgb_tmp);
+
+		cv::Mat tmp_color(rgb->height, rgb->width, CV_8UC4, rgb->data);
+
+		if (mirror_ == true){
+			cv::flip(tmp_color, *color_mat, 1);
+		}else
+		{
+			*color_mat = tmp_color.clone();
+		}
+		listener_.release(frames_);
+
+	}
+
+     boost::shared_ptr<cv::Mat> getColor(){
+     	//boost::shared_ptr<cv::Mat> color_mat(new cv::Mat( cv::Mat::zeros(1080, 1920, CV_32F) ));
+     	boost::shared_ptr<cv::Mat> color_mat(new cv::Mat(  ));
+		listener_.waitForNewFrame(frames_);
+	    libfreenect2::Frame * rgb = frames_[libfreenect2::Frame::Color];
+       // boost::shared_ptr<libfreenect2::Frame> rgb ( (libfreenect2::Frame*)rgb_tmp);
+		cv::Mat tmp_color(rgb->height, rgb->width, CV_8UC4, rgb->data);
+
+		if (mirror_ == true){
+			cv::flip(tmp_color, *color_mat, 1);
+
+		}else
+		{
+			*color_mat = tmp_color.clone();
+		}
+		
+		listener_.release(frames_);
+		return color_mat;
+	}
+
+
+
 
 	// Depth and color are aligned and registered 
 	void get(cv::Mat & color_mat, cv::Mat & depth_mat, const bool full_hd = true, const bool remove_points = false){
@@ -481,6 +549,37 @@ public:
 		cloud = getCloud(rgb, depth, cloud);
 		listener_.release(frames_);
 	}
+
+ void  getColorwithCloud( boost::shared_ptr<cv::Mat> &color_mat, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, 
+		const bool full_hd = true, const bool remove_points = false){
+		listener_.waitForNewFrame(frames_);
+
+		libfreenect2::Frame * rgb = frames_[libfreenect2::Frame::Color];
+		libfreenect2::Frame * depth = frames_[libfreenect2::Frame::Depth];
+
+		registration_->apply(rgb, depth, &undistorted_, &registered_, remove_points, &big_mat_, map_);
+
+		//cv::Mat tmp_depth(undistorted_.height, undistorted_.width, CV_32FC1, undistorted_.data);
+		cv::Mat tmp_color;
+
+		if(full_hd)
+			tmp_color = cv::Mat(rgb->height, rgb->width, CV_8UC4, rgb->data);
+		else
+			tmp_color = cv::Mat(registered_.height, registered_.width, CV_8UC4, registered_.data);
+
+		if (mirror_ == true) {
+		//	cv::flip(tmp_depth, depth_mat, 1);
+			cv::flip(tmp_color, *color_mat, 1);
+		}else{
+			*color_mat = tmp_color.clone();
+		//	depth_mat = tmp_depth.clone();
+		}
+
+		cloud = getCloud(rgb, depth, cloud);
+		listener_.release(frames_);
+		//return color_mat;
+	}
+
 #endif
 
 #ifdef WITH_SERIALIZATION
@@ -542,11 +641,14 @@ private:
 	    for(int i = 0; i < w; i++)
 	    {
 	        *pm1++ = (i-depth_p.cx + 0.5) / depth_p.fx;
-	    }
+	        std::cout<<*pm1<<std::endl;
+
+              }
 	    for (int i = 0; i < h; i++)
 	    {
 	        *pm2++ = (i-depth_p.cy + 0.5) / depth_p.fy;
-	    }
+	     std::cout<<*pm2<<std::endl;
+             }
 	}
 
 	libfreenect2::Freenect2 freenect2_;

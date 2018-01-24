@@ -24,6 +24,8 @@ via Luigi Alamanni 13D, San Giuliano Terme 56010 (PI), Italy
 #include <pcl/console/parse.h>
 #include <pcl/console/time.h>
 #include <pcl/io/ply_io.h>
+#include <pcl/io/pcd_io.h>
+
 #ifdef WITH_SERIALIZATION
 #include "serialization.h"
 #endif
@@ -52,7 +54,8 @@ void KeyboardEventOccurred(const pcl::visualization::KeyboardEvent &event, void 
       std::chrono::high_resolution_clock::time_point p = std::chrono::high_resolution_clock::now();
       std::string now = std::to_string((long)std::chrono::duration_cast<std::chrono::milliseconds>(p.time_since_epoch()).count());
       writer.write ("cloud_" + now, *(s->cloud_), s->binary_, s->use_camera_);
-      
+       pcl::io::savePCDFileASCII ("cloud_"+now+".pcd", *(s->cloud_));
+
       std::cout << "saved " << "cloud_" + now + ".ply" << std::endl;
     }
     if(pressed == "m")
@@ -100,6 +103,8 @@ int main(int argc, char * argv[])
   std::cout << "getting cloud" << std::endl;
   cloud = k2g.getCloud();
 
+  std::cout << "cloud size  " << sizeof(cloud->points) << std::endl;
+
   k2g.printParameters();
 
   cloud->sensor_orientation_.w() = 0.0;
@@ -118,12 +123,25 @@ int main(int argc, char * argv[])
 
   cv::Mat color, depth;
 
+
+  Eigen::Matrix4f transform_1 = Eigen::Matrix4f::Identity();
+
+  // Define a rotation matrix (see https://en.wikipedia.org/wiki/Rotation_matrix)
+  float theta =M_PI/2.; // The angle of rotation in radians
+  transform_1 (0,0) = cos (theta);
+  transform_1 (0,2) = -sin(theta);
+  transform_1 (2,0) = sin (theta);
+  transform_1 (2,2) = cos (theta);
+  transform_1 (0,3) = 5.0;
+  std::cout<<transform_1.inverse()<<std::endl;
+    
+
   while(!viewer->wasStopped()){
 
     viewer->spinOnce ();
     std::chrono::high_resolution_clock::time_point tnow = std::chrono::high_resolution_clock::now();
 
-    k2g.get(color, depth, cloud);
+    k2g.get(color, depth, cloud,false);
     // Showing only color since depth is float and needs conversion
     cv::imshow("color", color);
     int c = cv::waitKey(1);

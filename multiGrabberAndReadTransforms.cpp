@@ -17,6 +17,9 @@ Scuola Superiore Sant'Anna
 via Luigi Alamanni 13D, San Giuliano Terme 56010 (PI), Italy
 */
 #include "k2g.h"
+//#include "icp.h"
+//#include "filters.h"
+//#include "segmentation.h"
 #include <pcl/visualization/cloud_viewer.h>
 #include <chrono>
 
@@ -25,24 +28,59 @@ via Luigi Alamanni 13D, San Giuliano Terme 56010 (PI), Italy
 #include <pcl/console/parse.h>
 #include <pcl/console/time.h>
 #include <pcl/io/ply_io.h>
-#include <pcl/io/png_io.h>
+#include <pcl/registration/transforms.h>
 
-void readTransform(const std::string &file,Eigen::Matrix4f &transform ){
+//typedef pcl::PointXYZRGB PointT;
+//typedef pcl::PointCloud<PointT> PointCloud;
+//typedef pcl::PointNormal PointNormalT;
+//typedef pcl::PointCloud<PointNormalT> PointCloudWithNormals;
+
+//typedef std::pair<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>>() makePair;
+//typedef pcl::PointCloud<PointNT>::Ptr PointCloudPtr;
+
+struct ObjectRecognitionParameters
+{
+  // Filter parameters
+  float min_depth;
+  float max_depth;
+  float downsample_leaf_size;
+  float outlier_rejection_radius;
+  int outlier_rejection_min_neighbors;
+
+  // Segmentation parameters
+  float plane_inlier_distance_threshold;
+  int max_ransac_iterations;
+  float cluster_tolerance;
+  int min_cluster_size;
+  int max_cluster_size;
+
+  // Feature estimation parameters
+  float surface_normal_radius;
+  float keypoints_min_scale;
+  float keypoints_nr_octaves;
+  float keypoints_nr_scales_per_octave;
+  float keypoints_min_contrast;
+  float local_descriptor_radius;
+
+  // Registration parameters
+  float initial_alignment_min_sample_distance;
+  float initial_alignment_max_correspondence_distance;
+  int initial_alignment_nr_iterations;
+  float icp_max_correspondence_distance;
+  float icp_outlier_rejection_threshold;
+  float icp_transformation_epsilon;
+  int icp_max_iterations;
+};
 
 
 
-fstream binary_file(file.c_str(),ios::binary|ios::in);
-//while (binary_file.good()) {
 
-binary_file.read(reinterpret_cast<char *>(&transform),sizeof(Eigen::Matrix4f));
-//}
-
-binary_file.close();
-
-
-std::cout<<"tranform read \n "<<transform<<std::endl;
-
+bool is_file_exist(const char *fileName)
+{
+    std::ifstream infile(fileName);
+    return infile.good();
 }
+
 
 struct K2G_generator{
 public:
@@ -80,17 +118,11 @@ KeyboardEventOccurred(const pcl::visualization::KeyboardEvent &event, void * dat
       pcl::PLYWriter writer;
       std::chrono::high_resolution_clock::time_point p = std::chrono::high_resolution_clock::now();
       std::string now = std::to_string((long)std::chrono::duration_cast<std::chrono::milliseconds>(p.time_since_epoch()).count());
-      cv::Mat color,depth;
+      cv::Mat color;
       for(size_t i = 0; i < s->kinects_.size(); ++i){
       	writer.write ("cloud_"+ std::to_string(i) + "_" + now + ".ply", *(s->clouds_[i]), s->binary_, s->use_camera_);
-        s->kinects_[i]->get(color, depth);
+        s->kinects_[i]->getColor(color);
       	cv::imwrite("color_" + std::to_string(i) + "_" + now + ".jpg", color);
-        //std::vector<int> compression_params;
-        //compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
-       // compression_params.push_back(9);
-     //   cv::imwrite("color_" + std::to_string(i) + "_" + now + ".png", color,compression_params);
-      //   pcl::io::saveRgbPNGFile ("color_" + std::to_string(i) + "_" + now + ".png", color,512,424);
-         
       }
       std::cout << "saved " << "cloud and color " + now << std::endl;
     }
@@ -133,6 +165,14 @@ int main(int argc, char *argv[])
   // Initialize container structures
   std::vector<K2G *> kinects(kinect2_count);
   std::vector<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>> clouds(kinect2_count);
+  //std::map<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>,boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>> cloudPairs;
+  //cloudPairs.insert ( std::pair<char,int>('a',100) );
+
+ //pcl::PointCloud<pcl::PointXYZRGB>::Ptr result (new pcl::PointCloud<pcl::PointXYZRGB> ), source, target,targetToSrc;
+  Eigen::Matrix4f GlobalTransform = Eigen::Matrix4f::Identity ();
+  std::vector<Eigen::Matrix4f> Transforms;
+
+
   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer(new pcl::visualization::PCLVisualizer ("3D viewer"));
   viewer->setBackgroundColor (0, 0, 0);
 
@@ -140,85 +180,101 @@ int main(int argc, char *argv[])
   K2G_generator kinect_generator(freenectprocessor, mirroring, argv);
   std::generate(kinects.begin(), kinects.end(), kinect_generator);
 
-Eigen::Matrix4f transform;
-Eigen::Vector4f vector4f;
-vector4f(0)=0;
-vector4f(1)=0;
-vector4f(2)=0;
-vector4f(3)=1;
-
-readTransform("output.transforms",transform);
  
- Eigen::Matrix4f transform2= Eigen::Matrix4f::Identity ();
-transform2(0,0)=0;
-transform2(0,1)=-1;
-transform2(1,0)=1;
-transform2(1,1)=0;
-transform2(0,3)=1;
-
- std::cout<<"transform  \n"<<transform2<<std::endl;
-
- std::cout<<"transform inverse \n"<<transform2.inverse()<<std::endl;
 
 
+  //viewer->resetCamera();//moveAllPointClouds();
+
+ //viewer->resetStoppedFlag ();
+
+//viewer->initCameraParameters ();
+
+
+//std::cout<<"Transforms size "<<Transforms.size();
+
+//std::ofstream FILE("./output.transforms", std::ios::out | std::ofstream::binary);
+//std::copy(Transforms.begin(), Transforms.end(), std::ostreambuf_iterator<Eigen::Matrix4f>(FILE));
 
 
 
-  // Initialize clouds and viewer viewpoints
+
+if (is_file_exist("output.transforms") ) {
+
+size_t sz ;
+fstream FILE("output.transforms",ios::binary|ios::in);
+//while (binary_file.good()) {
+FILE.read(reinterpret_cast<char*>(&sz), sizeof(size_t));
+std::cout<<"sz "<<sz<<std::endl;
+Transforms.resize(sz);
+FILE.read(reinterpret_cast<char*>(&Transforms[0]), sz * sizeof(Transforms[0]));
+FILE.close();
+
+
+
+
+}  else return 0;
+  
+
+for (int i=0;i<Transforms.size();i++)  std::cout<<"Transform "<<i<< "\n"<<Transforms.at(i)<<std::endl;
+
   for(size_t i = 0; i < kinect2_count; ++i)
   {
-  	clouds[i] = kinects[i]->getCloud();
+  	
+    clouds[i] = kinects[i]->getCloud();
+    if ( i>0) pcl::transformPointCloud (*clouds[i], *clouds[i], Transforms.at(i-1) );
 
-  //	clouds[i]->sensor_orientation_.w() = 0.0;
-  //	clouds[i]->sensor_orientation_.x() = 1.0;
-  //	clouds[i]->sensor_orientation_.y() = 0.0;
-  //	clouds[i]->sensor_orientation_.z() = 0.0; 
+  	clouds[i]->sensor_orientation_.w() = 0.0;
+  	clouds[i]->sensor_orientation_.x() = 1.0;
+  	clouds[i]->sensor_orientation_.y() = 0.0;
+  	clouds[i]->sensor_orientation_.z() = 0.0; 
 
   	viewer->addPointCloud<pcl::PointXYZRGB>(clouds[i], pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB>(clouds[i]), "sample cloud_" + i);
   	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud_" + i);
   }
 
   // Add keyboards callbacks
-  PlySaver ps(clouds, true, false, kinects);
-  viewer->registerKeyboardCallback(KeyboardEventOccurred, (void*)&ps);
-  std::cout << "starting cycle" << std::endl;
+//  PlySaver ps(clouds, false, false, kinects);
+ // viewer->registerKeyboardCallback(KeyboardEventOccurred, (void*)&ps);
+   std::cout << "starting cycle" << std::endl;
 
-  std::chrono::high_resolution_clock::time_point tnow, tpost, tpost_prev;
-  tpost_prev=std::chrono::high_resolution_clock::now();
-  std::vector<pcl::visualization::Camera> cam; 
-  // Start vqisualization cycle
+   std::chrono::high_resolution_clock::time_point tnow, tpost;
+
+
+viewer->resetCameraViewpoint("sample cloud_1");
+
+
+  // Start visualization cycle
+
+   float sum=0.;
+  int say=0;
   while(!viewer->wasStopped()){
-
+say++;
     viewer->spinOnce ();
-   
-   // cout<< viewer->getViewerPose().linear();
-   // viewer->getCameras(cam); 
-
-    // cout << "Cam: " << endl 
-    //         << " - pos: (" << cam[0].pos[0] << ", "    << cam[0].pos[1] << ", "    << cam[0].pos[2] << ")" << endl 
-    //          << " - view: ("    << cam[0].view[0] << ", "   << cam[0].view[1] << ", "   << cam[0].view[2] << ")"    << endl 
-    //          << " - focal: ("   << cam[0].focal[0] << ", "  << cam[0].focal[1] << ", "  << cam[0].focal[2] << ")"   << endl;
-
-
 
     tnow = std::chrono::high_resolution_clock::now();
 
-    for(size_t i = 0; i < kinect2_count; ++i) {
-    	clouds[i] = kinects[i]->updateCloud(clouds[i]);
-   //   std::cout << "<<< time stamp "<< i <<" : " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()  << std::endl;
 
-    }
-       
-    //   cout<<" Point Z "<<clouds[0]->points[2340].z<<endl;
-    tpost = std::chrono::high_resolution_clock::now();
-   // std::cout << "<<< delta: " << std::chrono::duration_cast<std::chrono::milliseconds>(tpost.time_since_epoch()).count()-std::chrono::duration_cast<std::chrono::milliseconds>(tpost_prev.time_since_epoch()).count()<<std::endl;
+
+     /*for(size_t i = 0; i < kinect2_count; ++i) {
+      
+      clouds[i] = kinects[i]->updateCloud(clouds[i]);
+      if ( i>0) pcl::transformPointCloud (*clouds[i], *clouds[i], Transforms.at(i-1) );
+
+      }*/
+
    
-    tpost_prev=tpost;
-   // std::cout << "<<< delta  : " << std::chrono::duration_cast<std::chrono::milliseconds>(tpost.time_since_epoch()).count()-std::chrono::duration_cast<std::chrono::milliseconds>(tnow.time_since_epoch()).count();
-   // std::cout << "delta " << std::chrono::duration_cast<std::chrono::duration<float>>(tpost - tnow).count() * 1000 << std::endl;
-     
-    for(size_t i = 0; i < kinect2_count; ++i)
-  	viewer->updatePointCloud<pcl::PointXYZRGB>(clouds[i], pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> (clouds[i]), "sample cloud_" + i);
+    for(size_t i = 0; i < kinect2_count; ++i) {
+      clouds[i] = kinects[i]->updateCloud(clouds[i]);
+    //  if ( i>0) pcl::transformPointCloud (*clouds[i], *clouds[i], Transforms.at(i-1) );
+
+    //	viewer->updatePointCloud<pcl::PointXYZRGB>(clouds[i], pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> (clouds[i]), "sample cloud_" + i);
+    }
+
+    tpost = std::chrono::high_resolution_clock::now();
+    std::cout << "delta " << std::chrono::duration_cast<std::chrono::duration<float>>(tpost - tnow).count() * 1000 << std::endl;
+
+    sum=sum+std::chrono::duration_cast<std::chrono::duration<float>>(tpost - tnow).count() * 1000;
+    std::cout<<"average: "<<sum/say<<std::endl;
   }
 
   // Close all kinect grabbers
