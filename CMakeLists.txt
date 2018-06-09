@@ -85,7 +85,7 @@ add_executable(pcl_ply_multiCamrecorderThreadsRValue pcl_ply_multiCamrecorderThr
 add_executable(pcl_ply_multiCamrecorderThreadsConstRef pcl_ply_multiCamrecorderThreadsConstRef.cpp)
 add_executable(pcl_video_player pcl_video_player.cpp)
 add_executable(pcl_vtk_player pcl_vtk_player.cpp)
-
+add_executable(objviewer objviewer.cpp)
 
 add_executable(pairwise_incr_reg  pairwise_incr_reg.cpp)
 add_executable(registration_vis  registration_vis.cpp)
@@ -117,9 +117,11 @@ add_executable(poisson_recontruction poisson_recontruction.cpp)
 add_executable(ndt  ndt.cpp)
 add_executable(example1  example1.cpp)
 add_executable(example2  example2.cpp)
-add_executable(bspline_fitting bspline_fitting.cpp)
+#add_executable(bspline_fitting bspline_fitting.cpp)
 add_executable(staticticalRemoval staticticalRemoval.cpp)
 add_executable(radiusOutlierRemoval radiusOutlierRemoval.cpp)
+add_executable(bilateralfilter bilateralfilter.cpp)
+add_executable(pass_through  passthrough.cpp)
 
 
 target_link_libraries(Kinect2Grabber      ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
@@ -134,6 +136,7 @@ target_link_libraries(pcl_ply_multiCamrecorderThreadsRValue  ${OpenCV_LIBS} ${fr
 target_link_libraries(pcl_ply_multiCamrecorderThreadsConstRef  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
 
 target_link_libraries(pcl_video_player  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(objviewer ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
 
 target_link_libraries(pairwise_incr_reg  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
 target_link_libraries(multi_grabb_registr  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
@@ -164,9 +167,11 @@ target_link_libraries(poisson_recon ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LI
 target_link_libraries(marching_cube ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
 target_link_libraries(poisson_recontruction ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
 
-target_link_libraries(bspline_fitting ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+#target_link_libraries(bspline_fitting ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
 target_link_libraries(staticticalRemoval ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
 target_link_libraries(radiusOutlierRemoval  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(bilateralfilter ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+target_link_libraries(pass_through  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
 
 if(${WITH_ROS})
 	add_executable(RosKinect2Grabber test_ros.cpp)

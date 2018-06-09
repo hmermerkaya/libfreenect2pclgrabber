@@ -12,6 +12,8 @@
 #include <tuple>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
+#include <boost/algorithm/string.hpp>
+
 
 bool is_file_exist(const char *fileName)
 {
@@ -236,7 +238,8 @@ if (sz>0) {
            iss<<GlobalCalibTransforms.at(i);
 
            temp=iss.str();
-           temp.erase(std::remove(temp.begin(), temp.end(), '\n'), temp.end());
+          // temp.erase(std::remove(temp.begin(), temp.end(), '\n'), temp.end());
+           boost::replace_all(temp, "\n", " ");
            v.second.put<std::string>("transform",temp);
 
          }
@@ -264,6 +267,7 @@ size_t sz ;
         FILE.read(reinterpret_cast<char*>(&Transforms[0]), sz * sizeof(Transforms[0]));
         FILE.close();
 */
+
 
 
   // Finish

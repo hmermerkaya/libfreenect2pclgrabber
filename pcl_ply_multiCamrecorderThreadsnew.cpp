@@ -265,9 +265,13 @@ class PCDBuffer
     bool 
    // pushBack (const std::vector<typename PointCloud<PointT>::Ptr>  &, const std::vector<boost::shared_ptr<cv::Mat> > &); // thread-save wrapper for push_back() method of ciruclar_buffer
 
-     pushBack ( const std::pair<std::vector<typename PointCloud<PointT>::Ptr>, std::vector<boost::shared_ptr<cv::Mat>>> &) ;
+  //   pushBack ( const std::pair< boost::shared_ptr<std::vector< PointCloud<PointT>>>,  boost::shared_ptr<std::vector<cv::Mat>> > & ) ;
 
-     std::pair<std::vector<typename PointCloud<PointT>::Ptr>, std::vector<boost::shared_ptr<cv::Mat>>>
+    pushBack(const std::vector<std::pair<boost::shared_ptr<PointCloud<PointT>>, boost::shared_ptr<cv::Mat> > >   &);
+   
+   // std::pair< boost::shared_ptr<std::vector< PointCloud<PointT>>>,  boost::shared_ptr<std::vector<cv::Mat>> >
+      std::vector<std::pair<boost::shared_ptr<PointCloud<PointT>>, boost::shared_ptr<cv::Mat> > >  
+   //  std::pair<std::vector<typename PointCloud<PointT>::Ptr>, std::vector<boost::shared_ptr<cv::Mat>>>
 // const  std::vector< typename PointCloud<PointT>::Ptr > 
     getFront (); // thread-save wrapper for front() method of ciruclar_buffer
 
@@ -312,7 +316,10 @@ class PCDBuffer
     boost::mutex bmutex_;
     boost::condition_variable buff_empty_;
   //  boost::circular_buffer< std::vector<typename PointCloud<PointT>::Ptr> >  buffer_;
-    boost::circular_buffer<std::pair<std::vector<typename PointCloud<PointT>::Ptr>, std::vector<boost::shared_ptr<cv::Mat>>> > buffer_;
+    //boost::circular_buffer<std::pair<std::vector<typename PointCloud<PointT>::Ptr>, std::vector<boost::shared_ptr<cv::Mat>>> > buffer_;
+  //  boost::circular_buffer<  std::pair<  boost::shared_ptr<std::vector< PointCloud<PointT>>>,  boost::shared_ptr<std::vector<cv::Mat>> > > buffer_;
+
+ boost::circular_buffer<  std::vector<std::pair<boost::shared_ptr<PointCloud<PointT>>, boost::shared_ptr<cv::Mat> > >  >  buffer_;
     //boost::circular_buffer<std::pair<std::vector<typename PointCloud<PointT>::Ptr, std::vector<boost::shared_ptr<cv::Mat>  >  buffer_;
 
   //  boost::circular_buffer<  std::vector<typename PointCloud<PointT>::Ptr> >  bufferColors_;
@@ -321,7 +328,10 @@ class PCDBuffer
 
 //////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointT> bool 
-PCDBuffer<PointT>::pushBack ( const std::pair<std::vector<typename PointCloud<PointT>::Ptr>, std::vector<boost::shared_ptr<cv::Mat>>> & cloudColors
+PCDBuffer<PointT>::pushBack (
+const   std::vector<std::pair<boost::shared_ptr<PointCloud<PointT>>, boost::shared_ptr<cv::Mat> > > 
+  //const std::pair<  boost::shared_ptr<std::vector< PointCloud<PointT>>>,  boost::shared_ptr<std::vector<cv::Mat>> >
+    & cloudColors
 /* const std::vector<typename PointCloud<PointT>::Ptr>  & clouds, const std::vector<boost::shared_ptr<cv::Mat> > &colors*/ )
 {
   bool retVal = false;
@@ -340,11 +350,15 @@ PCDBuffer<PointT>::pushBack ( const std::pair<std::vector<typename PointCloud<Po
 
 //////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointT> 
- std::pair<std::vector<typename PointCloud<PointT>::Ptr>, std::vector<boost::shared_ptr<cv::Mat>>>
+ //std::pair<  boost::shared_ptr<std::vector< PointCloud<PointT>>>,  boost::shared_ptr<std::vector<cv::Mat>> >
+  std::vector<std::pair<boost::shared_ptr<PointCloud<PointT>>, boost::shared_ptr<cv::Mat> > >  
+// std::pair<std::vector<typename PointCloud<PointT>::Ptr>, std::vector<boost::shared_ptr<cv::Mat>>>
 //const  std::vector<typename PointCloud<PointT>::Ptr > 
 PCDBuffer<PointT>::getFront ()
 {
-  std::pair<std::vector<typename PointCloud<PointT>::Ptr>, std::vector<boost::shared_ptr<cv::Mat>>> cloudColors;
+    std::vector<std::pair<boost::shared_ptr<PointCloud<PointT>>, boost::shared_ptr<cv::Mat> > >  cloudColors;
+ // std::pair<  boost::shared_ptr<std::vector< PointCloud<PointT>>>,  boost::shared_ptr<std::vector<cv::Mat>> > cloudColors;
+ // std::pair<std::vector<typename PointCloud<PointT>::Ptr>, std::vector<boost::shared_ptr<cv::Mat>>> cloudColors;
  // std::vector< typename PointCloud<PointT>::Ptr > cloud;
   {
     boost::mutex::scoped_lock buff_lock (bmutex_);
@@ -470,15 +484,23 @@ class Producer
       Processor freenectprocessor = CUDA;
      // freenectprocessor = static_cast<Processor>(atoi(argv[1]));
 
-      int kinect2_count=3;
+      int kinect2_count=2;
 
        bool mirroring=true;
       std::vector<K2G *> kinects(kinect2_count);
-      std::vector<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>> clouds(kinect2_count);
-      std::vector<boost::shared_ptr<cv::Mat>> colors(kinect2_count);
+      // std::vector<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>> clouds(kinect2_count);
+    //  std::vector<boost::shared_ptr<cv::Mat> > colors(kinect2_count);
+      clouds.resize(kinect2_count);
+      colors.resize(kinect2_count);
       std::vector<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>> clouds_1(kinect2_count);
 
       boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> allPointClouds(new pcl::PointCloud<pcl::PointXYZRGB>);
+     // std::vector<pcl::PointCloud<pcl::PointXYZRGB>> clouds(kinect2_count);
+    //  std::vector<cv::Mat> colors(kinect2_count);
+
+     
+
+     // boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> allPointClouds(new pcl::PointCloud<pcl::PointXYZRGB>);
 
       //std::map<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>,boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>> cloudPairs;
       //cloudPairs.insert ( std::pair<char,int>('a',100) );
@@ -493,7 +515,8 @@ class Producer
  // char *arg[]={ "021401644747","003726334247","011054343347"};
   // char *arg[]={ "021401644747", "011054343347", "003726334247"};
 
-    char *arg[]={ "021401644747","291296634347","003726334247"};
+    char *arg[]={ "021401644747","291296634347"};
+    //"003726334247"};
     //    char *arg[]={"021401644747","003726334247"};
    // char *arg[]={"021401644747"};
    // char *arg[]={"003726334247"};
@@ -501,8 +524,7 @@ class Producer
       K2G_generator kinect_generator(freenectprocessor, mirroring, arg);
       std::generate(kinects.begin(), kinects.end(), kinect_generator);
 
-
-        for(size_t i = 0; i < kinect2_count; ++i)
+      for(size_t i = 0; i < kinect2_count; ++i)
         {
            //  if (i==1) continue;
 
@@ -521,6 +543,7 @@ class Producer
          // *allPointClouds+=*clouds[i];
           
         }
+        
        //  std::cout<<"step 0"<<std::endl;
 
 
@@ -573,6 +596,7 @@ class Producer
       int say=0;
       int sumendTimeDeltas = 0,sumstartTimeDeltas = 0;
       for(int i=0;i<3;i++){startTime[i]=0;endTime[i]=0;}
+
       while (true)
       {
 
@@ -634,30 +658,34 @@ class Producer
 
 
 
-       boost::asio::io_service io;
+         boost::asio::io_service io;
        //  boost::asio::deadline_timer t1(io, boost::posix_time::milliseconds(15));
       //   boost::asio::deadline_timer t2(io, boost::posix_time::milliseconds(15));
        //  boost::asio::deadline_timer t3(io, boost::posix_time::milliseconds(30));
          
          boost::asio::deadline_timer t1(io);
          boost::asio::deadline_timer t2(io);
-         boost::asio::deadline_timer t3(io);
+        // boost::asio::deadline_timer t3(io);
          posixNexTime+=time_duration(milliseconds(80));
          t1.expires_at(posixNexTime);
          t2.expires_at(posixNexTime);
-         t3.expires_at(posixNexTime);
+       //  t3.expires_at(posixNexTime);
 
        //  t1.async_wait(boost::bind(&Producer::threadPointCloud,this, kinects[0], boost::ref(clouds[0]), Eigen::Matrix4f::Identity ()));         
          t1.async_wait([&] (const boost::system::error_code&){
            
             startTime[0]=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-             //std::cout << "time stamp before 1: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()  << std::endl;
+    //         std::cout << "time stamp before 1: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()  << std::endl;
              //clouds[0] = kinects[0]->updateCloud(clouds[0]);
            //  clouds[0] = kinects[0]->getCloud();
              // boost::shared_ptr< cv::Mat> color;
-              // colors[0].reset();//clouds[0].reset();
+             colors[0].reset(new cv::Mat(  ));   ;//clouds[0].reset();
             //   colors[0]= kinects[0]->getColorwithCloud( clouds[0]);
-              kinects[0]->getColorwithCloud(colors[0], clouds[0]);
+
+             //  clouds[0].reset(new pcl::PointCloud<pcl::PointXYZRGB>);
+              //kinects[0]->getColorwithCloud(&((*colors.get()).at(0)),&((*clouds.get()).at(0))) ;
+               kinects[0]->getColorwithCloud(colors[0], clouds[0]);
+
             //  clouds[0]= thresholdDepth (clouds[0], 0.4, 2.3);
 
                 //  clouds[0]  = thresholdDepth (clouds[0], 0.4, 2.3);
@@ -675,7 +703,7 @@ class Producer
              //std::cout << "time stamp 1: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()  << std::endl;
   
         // clouds[0] = kinects[0]->updateCloud(clouds[0]);
-            pcl::transformPointCloud (*clouds[0], *clouds[0], Eigen::Matrix4f::Identity () );
+            //pcl::transformPointCloud (*clouds[0], *clouds[0], Eigen::Matrix4f::Identity () );
           });
 
         
@@ -685,19 +713,22 @@ class Producer
              
              startTime[1]=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
-            // std::cout << "time stamp before 2: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()  << std::endl;
+  //           std::cout << "time stamp before 2: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()  << std::endl;
             // clouds[1]=kinects[1]->getCloud();
             // clouds[1] = kinects[1]->updateCloud(clouds[1]);
              // clouds[1] = kinects[1]->getCloud();
                // colors[1].reset(new cv::Mat(*kinects[1]->getColorwithCloud( clouds[1])));boost::shared_ptr< cv::Mat> color;
-               // colors[1].reset();//clouds[1].reset();
+             //   colors[1].reset();//clouds[1].reset();
+             colors[1].reset(new cv::Mat(  ));
             // colors[1]=kinects[1]->getColorwithCloud( clouds[1]);
-            kinects[1]->getColorwithCloud(colors[1], clouds[1]);
+             //  clouds[1].reset(new pcl::PointCloud<pcl::PointXYZRGB>);
+             kinects[1]->getColorwithCloud(colors[1], clouds[1]);
+            //kinects[1]->getColorwithCloud(colors[1], clouds[1]);
              //  colors[1].reset(new cv::Mat(*kinects[1]->getColorwithCloud( clouds[1])));
-
+//std::cout << "time stamp before 22: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()  << std::endl;
+         
             //  clouds[1]  = thresholdDepth (clouds[1], 0.4, 2.3);
               // pcl::transformPointCloud (*clouds[1], *clouds[1], Transforms.at(0) );
-
            // colors[1]=boost::make_shared< cv::Mat> (*kinects[1]->getColorwithCloud( clouds[1]));
              //colors[1]= kinects[1]->getColor();
             // kinects[1]->getColor(colors[1]);
@@ -705,48 +736,51 @@ class Producer
              endTime[1]=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
              //  clouds[1]=kinects[1]->getCloud();
-             pcl::transformPointCloud (*clouds[1], *clouds[1], Transforms.at(0) );
+             //pcl::transformPointCloud (*clouds[1], *clouds[1], Transforms.at(0) );
 
           });
 
 
          //t2.async_wait(boost::bind(&Producer::threadPointCloud,this, kinects[1], boost::ref(clouds[1]), Transforms.at(0) ));   
 
-          t3.async_wait([&](const boost::system::error_code&){
+//           t3.async_wait([&](const boost::system::error_code&){
             
-             startTime[2]=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+//              startTime[2]=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
-             //std::cout << "time stamp before 3: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()  << std::endl;
+//       //       std::cout << "time stamp before 3: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()  << std::endl;
              
-//             clouds[2] = kinects[2]->updateCloud(clouds[2]);
-            // clouds[2] = kinects[2]->getCloud();
-           //  boost::shared_ptr< cv::Mat> color;
-                //colors[2].reset();//clouds[2].reset();
-             //   colors[2]= kinects[2]->getColorwithCloud( clouds[2]);
-                 kinects[2]->getColorwithCloud(colors[2], clouds[2]);
-                //colors[2].reset(new cv::Mat(*kinects[2]->getColorwithCloud( clouds[2])));
-                // colors[2]=
-            //  colors[2]=boost::make_shared< cv::Mat> (*kinects[2]->getColorwithCloud( clouds[2]));
-            //   clouds[2]  = thresholdDepth (clouds[2], 0.4, 2.3);
-            //   pcl::transformPointCloud (*clouds[2], *clouds[2], Transforms.at(1) );
-           // // colors[2]= kinects[2]->getColor();
-            // kinects[2]->getColor(colors[2]);
+// //             clouds[2] = kinects[2]->updateCloud(clouds[2]);
+//             // clouds[2] = kinects[2]->getCloud();
+//            //  boost::shared_ptr< cv::Mat> color;
+//               //  colors[2].reset();//clouds[2].reset();
+//              //   colors[2]= kinects[2]->getColorwithCloud( clouds[2]);
+//                //   clouds[2].reset(new pcl::PointCloud<pcl::PointXYZRGB>);
+//                  colors[2].reset(new cv::Mat(  ));
+
+//                  kinects[2]->getColorwithCloud(colors[2], clouds[2]);
+//                 //colors[2].reset(new cv::Mat(*kinects[2]->getColorwithCloud( clouds[2])));
+//                 // colors[2]=
+//             //  colors[2]=boost::make_shared< cv::Mat> (*kinects[2]->getColorwithCloud( clouds[2]));
+//             //   clouds[2]  = thresholdDepth (clouds[2], 0.4, 2.3);
+//             //   pcl::transformPointCloud (*clouds[2], *clouds[2], Transforms.at(1) );
+//            // // colors[2]= kinects[2]->getColor();
+//             // kinects[2]->getColor(colors[2]);
              
-             endTime[2]=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+//              endTime[2]=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
-             //std::cout << "time stamp 3: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()  << std::endl;
+//              //std::cout << "time stamp 3: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()  << std::endl;
 
-             //  clouds[1]=kinects[1]->getCloud();
-              pcl::transformPointCloud (*clouds[2], *clouds[2], Transforms.at(1) );
-          }); 
+//              //  clouds[1]=kinects[1]->getCloud();
+//             //  pcl::transformPointCloud (*clouds[2], *clouds[2], Transforms.at(1) );
+//           }); 
 
          std::thread ta([&](){io.run();});
          std::thread tb([&](){io.run();});
-         std::thread tc([&](){io.run();});
+        // std::thread tc([&](){io.run();});
 
 
 
-         ta.join();tb.join();tc.join();
+         ta.join();tb.join();//tc.join();
 
      
 
@@ -794,26 +828,56 @@ class Producer
     //  k2g.get(color, depth, cloud);
 
      
-
+/*
          std::vector<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>> newclouds;
          newclouds.reserve(clouds.size());
 
           std::vector<boost::shared_ptr<cv::Mat>> newcolors;
           newcolors.reserve(colors.size());
 
-          for (const auto& e : clouds)
-             newclouds.push_back(boost::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>(*e));
-          for (const auto& e : colors)
-             newcolors.push_back(boost::make_shared<cv::Mat>(*e));
 
-          if (!buf_.pushBack ( std::make_pair( newclouds,newcolors)) )
+          for (const auto& b : colors)
+             newcolors.push_back(boost::make_shared<cv::Mat>(*b));
+          for (const auto& e : clouds)
+          newclouds.push_back(boost::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>(*e));*/
+
+      //   std::pair< const boost::shared_ptr<std::vector< PointCloud<PointT>>>, const boost::shared_ptr<std::vector<cv::Mat>> > 
+
+// std::vector<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>>
+     //   std::cout<<"step 0"<<std::endl;
+/*
+          boost::shared_ptr<std::vector<PointCloud<PointT>>> newclouds(new std::vector<PointCloud<PointT>>());
+         //         std::cout<<"step 1"<<std::endl;
+
+          //std::make_shared <std::vector<PointCloud<PointT>>>(clouds.size()));
+          newclouds->reserve(clouds.size());
+        //  newclouds.reset(new std::vector<PointCloud<PointT>>());
+          for (const auto& e : clouds)  newclouds->push_back(*e);
+     //   std::cout<<"step 1"<<std::endl;
+
+          boost::shared_ptr<std::vector<cv::Mat>> newcolors(new std::vector<cv::Mat>());
+          newcolors->reserve(colors.size());
+          for (const auto& e : colors)
+            newcolors->push_back(e);
+        // std::cout<<"step 2"<<std::endl;*/
+
+
+          std::vector<std::pair<boost::shared_ptr<PointCloud<PointT>>, boost::shared_ptr<cv::Mat> > > colorClouds;
+
+          for(int i=0;i<clouds.size(); i++){
+
+           // colorClouds.push_back(std::make_pair(clouds[i],colors[i]));
+          colorClouds.push_back(std::make_pair(boost::make_shared<PointCloud<PointT>>(*clouds[i]),boost::make_shared<cv::Mat>( *colors[i])));
+          }
+
+          if (!buf_.pushBack ( colorClouds) )
             {
               {
                 boost::mutex::scoped_lock io_lock (io_mutex);
                 print_warn ("Warning! Buffer was full, overwriting data!\n");
               }
             }
-        //FPS_CALC ("cloud callback.", buf_);
+        FPS_CALC ("cloud callback.", buf_);
 
      
       
@@ -857,6 +921,14 @@ class Producer
     PCDBuffer<PointT> &buf_;
   //  openni_wrapper::OpenNIDevice::DepthMode depth_mode_;
     boost::shared_ptr<boost::thread> thread_;
+
+/*   boost::shared_ptr<std::vector<pcl::PointCloud<pcl::PointXYZRGB>>> clouds;
+   boost::shared_ptr<std::vector<cv::Mat>> colors;*/
+
+
+   std::vector< boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>> clouds;
+   std::vector<boost::shared_ptr<cv::Mat>> colors;
+
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -867,33 +939,35 @@ class Consumer
   private:
     ///////////////////////////////////////////////////////////////////////////////////////
     void 
-    writeToDisk (  const std::pair<std::vector<typename PointCloud<PointT>::Ptr>, std::vector<boost::shared_ptr<cv::Mat>>> &colorClouds
+    writeToDisk (  std::vector<std::pair<boost::shared_ptr<PointCloud<PointT>>, boost::shared_ptr<cv::Mat> > >   &&colorClouds
       /*const  std::vector< typename PointCloud<PointT>::Ptr >  &clouds*/ )
     {
       std::string time = boost::posix_time::to_iso_string (boost::posix_time::microsec_clock::local_time ());
-    //  allPointClouds.reset(new pcl::PointCloud<pcl::PointXYZRGB>);
-      for (int i=0;i<colorClouds.first.size();++i) {
+      allPointClouds.reset(new pcl::PointCloud<pcl::PointXYZRGB>);
+      for (int i=0;i<colorClouds.size();++i) {
      // stringstream ss;
       //ss << "frame-" << time <<"_"<<i<< ".ply";
     //   colorClouds.first[i] = thresholdDepth (colorClouds.first[i], 0.4, 2.3);
     //   std::cout<<Transforms.at(1)<<std::endl;
-        //colorClouds.first[i] = thresholdDepth (colorClouds.first[i], 0.4, 2.3);
-       // colorClouds.first[i]=removeOutliers(colorClouds.first[i], 0.03, 50);
-       // colorClouds.first[i]=downsample(colorClouds.first[i], 0.005); 
-      //  if (i!=0) pcl::transformPointCloud (*colorClouds.first[i], *colorClouds.first[i], Transforms.at(i-1) );
+   
+       colorClouds[i].first= thresholdDepth (colorClouds[i].first, 0.4, 2.);
+      // colorClouds[i].first=removeOutliers(colorClouds[i].first, 0.03, 50);
+    //    colorClouds[i].first=downsample(colorClouds[i].first, 0.005); 
+        if (i!=0) pcl::transformPointCloud (*colorClouds[i].first, *colorClouds[i].first, Transforms.at(i-1) );
 
-      //*allPointClouds+=*colorClouds.first[i];
-      plyWriter.write ("frame-" + time + "_" + std::to_string(i)+".ply", *colorClouds.first[i], true, false);
-      cv::imwrite("frame-" + time + "_" + std::to_string(i) + ".jpg",*colorClouds.second[i] );
+      //*allPointClouds+=*colorClouds[i].first;
+      plyWriter.write ("frame-" + time + "_" + std::to_string(i)+".ply", *(colorClouds[i].first), true, false);
+      cv::imwrite("frame-" + time + "_" + std::to_string(i) + ".jpg", *(colorClouds[i].second) );
         //std::vector<int> compression_params;
 
 
       //writer_.writeBinaryCompressed (ss.str (), *clouds[i]);
      }
 
-   //  plyWriter.write ("frame-" + time + ".ply", *allPointClouds, true, false);
+    //writer_.writeBinaryCompressed ("frame-" + time + ".pcd", *allPointClouds);
+    // plyWriter.write ("frame-" + time + ".ply", *allPointClouds, true, false);
 
-   //   FPS_CALC ("cloud write.", buf_);
+      FPS_CALC ("cloud write.", buf_);
     }
 
 
@@ -917,6 +991,14 @@ class Consumer
     {
 
 
+      if (is_file_exist("output.transforms")  ) {
+
+       readTransformsBinary("output.transforms",Transforms);
+
+
+
+
+      }  else return ;
 
 
 
@@ -959,7 +1041,8 @@ class Consumer
     boost::shared_ptr<boost::thread> thread_;
     PCDWriter writer_;
     PLYWriter plyWriter;
-   
+    std::vector<Eigen::Matrix4f> Transforms;
+
     boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> allPointClouds;//(new pcl::PointCloud<pcl::PointXYZRGB>);
 
 
@@ -1113,7 +1196,7 @@ main (int argc, char** argv)
     producer.stop ();
     consumer.stop ();
 
-
+   // producer.stop ();
 
   
   /*

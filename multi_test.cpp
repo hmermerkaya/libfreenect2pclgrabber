@@ -26,9 +26,46 @@ via Luigi Alamanni 13D, San Giuliano Terme 56010 (PI), Italy
 #include <pcl/console/time.h>
 #include <pcl/io/ply_io.h>
 #include <pcl/io/png_io.h>
+int maxIr, minIr;
+
+
+void findMinMax(const cv::Mat &ir)
+  {
+    for(size_t r = 0; r < (size_t)ir.rows; ++r)
+    {
+      const uint16_t *it = ir.ptr<uint16_t>(r);
+
+      for(size_t c = 0; c < (size_t)ir.cols; ++c, ++it)
+      {
+        minIr = std::min(minIr, (int) * it);
+        maxIr = std::max(maxIr, (int) * it);
+      }
+    }
+}
+void convertIr(const cv::Mat &ir, cv::Mat &grey)
+  {
+    maxIr=0xFFFF;
+    minIr=0;
+    cv::Ptr<cv::CLAHE> clahe;
+    clahe = cv::createCLAHE(1.5, cv::Size(32, 32));
+    const float factor = 255.0f / (maxIr - minIr);
+    grey.create(ir.rows, ir.cols, CV_8U);
+
+  //  #pragma omp parallel for
+    for(size_t r = 0; r < (size_t)ir.rows; ++r)
+    {
+      const uint16_t *itI = ir.ptr<uint16_t>(r);
+      uint8_t *itO = grey.ptr<uint8_t>(r);
+
+      for(size_t c = 0; c < (size_t)ir.cols; ++c, ++itI, ++itO)
+      {
+        *itO = std::min(std::max(*itI - minIr, 0) * factor, 255.0f);
+      }
+    }
+    clahe->apply(grey, grey);
+  }
 
 void readTransform(const std::string &file,Eigen::Matrix4f &transform ){
-
 
 
 fstream binary_file(file.c_str(),ios::binary|ios::in);
@@ -80,11 +117,29 @@ KeyboardEventOccurred(const pcl::visualization::KeyboardEvent &event, void * dat
       pcl::PLYWriter writer;
       std::chrono::high_resolution_clock::time_point p = std::chrono::high_resolution_clock::now();
       std::string now = std::to_string((long)std::chrono::duration_cast<std::chrono::milliseconds>(p.time_since_epoch()).count());
-      cv::Mat color,depth;
+      cv::Mat color,depth, bigmat, bigmat_scaled, bigmat_grey;
       for(size_t i = 0; i < s->kinects_.size(); ++i){
       	writer.write ("cloud_"+ std::to_string(i) + "_" + now + ".ply", *(s->clouds_[i]), s->binary_, s->use_camera_);
-        s->kinects_[i]->get(color, depth);
-      	cv::imwrite("color_" + std::to_string(i) + "_" + now + ".jpg", color);
+        s->kinects_[i]->get(color, depth, bigmat, false);
+      	//cv::imwrite("color_" + std::to_string(i) + "_" + now + ".jpg", color);
+        // cv::imwrite("bigmat_" + std::to_string(i) + "_" + now + ".exr", bigmat);
+         // cv::imwrite("depth_" + std::to_string(i) + "_" + now + ".exr", depth);
+         
+         //cv::resize(bigmat, bigmat_scaled, cv::Size(), 2.0, 2.0, cv::INTER_CUBIC);
+         //findMinMax(bigmat);
+         //convertIr(bigmat, bigmat_grey);
+         cv::imwrite(s->kinects_[i]->getSerial()+"_"+std::to_string(i)+".png", color);
+       //  cv::imwrite("ir_" + std::to_string(i) + ".png", bigmat_grey);
+       ///cv::imwrite("depth_" + std::to_string(i) + ".exr", bigmat);
+       //  cv::imwrite("depth_"+std::to_string(i) + ".exr", depth);
+      
+          depth.convertTo(depth, CV_16UC1);
+          cv::imwrite(s->kinects_[i]->getSerial()+"_"+std::to_string(i)+ "_depth.png", depth);
+      //   cv::imwrite(s->kinects_[i]->getSerial()+"_"+std::to_string(i)+ ".exr", depth);
+       // cv::FileStorage file("bigmat_" + std::to_string(i) + "_" + now + ".xml", cv::FileStorage::WRITE);
+         
+
+         //file << bigmat;
         //std::vector<int> compression_params;
         //compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
        // compression_params.push_back(9);
@@ -103,6 +158,8 @@ KeyboardEventOccurred(const pcl::visualization::KeyboardEvent &event, void * dat
     }
   }
 }
+
+
 
 int main(int argc, char *argv[])
 {

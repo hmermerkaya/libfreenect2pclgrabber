@@ -57,7 +57,7 @@ void sigint_handler(int s)
 class K2G {
 
 public:
-
+   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	K2G(Processor p = CPU, bool mirror = false, std::string serial = std::string()): mirror_(mirror), listener_(libfreenect2::Frame::Color | libfreenect2::Frame::Ir | libfreenect2::Frame::Depth), 
 	                                       undistorted_(512, 424, 4), registered_(512, 424, 4), big_mat_(1920, 1082, 4), qnan_(std::numeric_limits<float>::quiet_NaN()){
 
@@ -206,6 +206,17 @@ public:
 		
 	}
 
+	libfreenect2::Freenect2Device::IrCameraParams getIrParams() {
+
+		return getIrParameters();
+
+	}
+	std::string getSerial(){
+
+		return serial_;
+	}
+
+
 #ifdef WITH_PCL
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr getCloud(){
 		const short w = undistorted_.width;
@@ -230,6 +241,8 @@ public:
 		libfreenect2::Frame * depth = frames_[libfreenect2::Frame::Depth];
 
 		registration_->apply(rgb, depth, &undistorted_, &registered_, true, &big_mat_, map_);
+		//cv::Mat tmp_itD1(big_mat_.height, big_mat_.width, CV_8UC4, big_mat_.data);
+	//	std::cout<<"mappint to "<<map_[45585]<<" dfds "<<tmp_itD1.at<float>(45,488)<<std::endl;
 		const std::size_t w = undistorted_.width;
 		const std::size_t h = undistorted_.height;
 
@@ -239,10 +252,11 @@ public:
         if (mirror_ == true){
 
             cv::flip(tmp_itD0,tmp_itD0,1);
+
             cv::flip(tmp_itRGB0,tmp_itRGB0,1);
 
         }
-
+       // const float * itD0 = (float *) tmp_itD1.ptr();
         const float * itD0 = (float *) tmp_itD0.ptr();
         const char * itRGB0 = (char *) tmp_itRGB0.ptr();
         
@@ -259,11 +273,12 @@ public:
 			for(std::size_t x = 0; x < w; ++x, ++itP, ++itD, itRGB += 4 )
 			{
 				const float depth_value = *itD / 1000.0f;
-				
+				//std::cout<<"depth value: "<<*itD<<std::endl;
 				if(!std::isnan(depth_value) && !(std::abs(depth_value) < 0.0001)){
 	
 					const float rx = colmap(x) * depth_value;
-                	const float ry = dy * depth_value;               
+                	const float ry = dy * depth_value;  
+                	//std::cout<<"x y z: "<<rx<<" "<<ry<<" "<<depth_value<<std::endl;           
 					itP->z = depth_value;
 					itP->x = rx;
 					itP->y = ry;
@@ -327,7 +342,7 @@ public:
 				const float depth_value = *itD / 1000.0f;
 				
 				if(!std::isnan(depth_value) && !(std::abs(depth_value) < 0.0001)){
-	
+					
 					const float rx = colmap(x) * depth_value;
                 	const float ry = dy * depth_value;               
 					itP->z = depth_value;
@@ -463,7 +478,7 @@ public:
 
 
 	// Depth and color are aligned and registered 
-	void get(cv::Mat & color_mat, cv::Mat & depth_mat, const bool full_hd = true, const bool remove_points = false){
+	void get(cv::Mat & color_mat, cv::Mat & depth_mat,  const bool full_hd = true, const bool remove_points = false){
 		listener_.waitForNewFrame(frames_);
 		libfreenect2::Frame * rgb = frames_[libfreenect2::Frame::Color];
 		libfreenect2::Frame * depth = frames_[libfreenect2::Frame::Depth];
@@ -501,6 +516,7 @@ public:
 		cv::Mat tmp_depth(undistorted_.height, undistorted_.width, CV_32FC1, undistorted_.data);
 		cv::Mat tmp_color;
 		cv::Mat ir_tmp(ir->height, ir->width, CV_32FC1, ir->data);
+		//cv::Mat tmp_bigmat(big_mat_.height, big_mat_.width, CV_32FC1, big_mat_.data );
 
 		if(full_hd)
 			tmp_color = cv::Mat(rgb->height, rgb->width, CV_8UC4, rgb->data);
@@ -511,10 +527,12 @@ public:
 			cv::flip(tmp_depth, depth_mat, 1);
 			cv::flip(tmp_color, color_mat, 1);
 			cv::flip(ir_tmp, ir_mat, 1);
+			//cv::flip(tmp_bigmat, big_mat, 1);
 		}else{
 			color_mat = tmp_color.clone();
 			depth_mat = tmp_depth.clone();
 			ir_mat = ir_tmp.clone();
+			//big_mat=tmp_bigmat.clone();
 		}
 
 		listener_.release(frames_);
@@ -550,7 +568,7 @@ public:
 		listener_.release(frames_);
 	}
 
- void  getColorwithCloud( boost::shared_ptr<cv::Mat> &color_mat, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, 
+ void  getColorwithCloud( boost::shared_ptr<cv::Mat>  color_mat, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, 
 		const bool full_hd = true, const bool remove_points = false){
 		listener_.waitForNewFrame(frames_);
 
@@ -641,14 +659,14 @@ private:
 	    for(int i = 0; i < w; i++)
 	    {
 	        *pm1++ = (i-depth_p.cx + 0.5) / depth_p.fx;
-	        std::cout<<*pm1<<std::endl;
+	    //    std::cout<<*pm1<<"depth_p cx fx: "<<depth_p.cx<<" "<<depth_p.fx<<std::endl;
 
-              }
+         }
 	    for (int i = 0; i < h; i++)
 	    {
 	        *pm2++ = (i-depth_p.cy + 0.5) / depth_p.fy;
-	     std::cout<<*pm2<<std::endl;
-             }
+	      //  std::cout<<*pm2<<std::endl;
+         }
 	}
 
 	libfreenect2::Freenect2 freenect2_;
