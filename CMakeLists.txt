@@ -116,12 +116,14 @@ add_executable(poisson_recontruction poisson_recontruction.cpp)
 
 add_executable(ndt  ndt.cpp)
 add_executable(example1  example1.cpp)
-add_executable(example2  example2.cpp)
+#add_executable(example2  example2.cpp)
 #add_executable(bspline_fitting bspline_fitting.cpp)
 add_executable(staticticalRemoval staticticalRemoval.cpp)
 add_executable(radiusOutlierRemoval radiusOutlierRemoval.cpp)
 add_executable(bilateralfilter bilateralfilter.cpp)
 add_executable(pass_through  passthrough.cpp)
+add_executable(findCamPose findCamPose.cpp)
+target_link_libraries(findCamPose    ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
 
 
 target_link_libraries(Kinect2Grabber      ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
@@ -146,7 +148,7 @@ target_link_libraries(ndt  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} 
 target_link_libraries(registration_vis  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
 target_link_libraries(example1  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
 
-target_link_libraries(example2  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
+#target_link_libraries(example2  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
 
 target_link_libraries(multiGrabberAndRegister  ${OpenCV_LIBS} ${freenect2_LIBRARY} ${PCL_LIBRARIES} ${BOOST_LIBS})
 
